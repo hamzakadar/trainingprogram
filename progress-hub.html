@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Hub</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Build Tracker">
+<meta name="theme-color" content="#17191E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17191E;--paper:#EEF0F3;--surface:#FFFFFF;--accent:#FF5A36;
+    --accent-deep:#C23A1B;--steel:#5B6470;--steel-soft:#8A929C;--line:#E3E6EA;
+    --go:#1F9D63;--cool:#2C7A8C;--shadow:0 1px 2px rgba(23,25,30,.06),0 6px 20px rgba(23,25,30,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:560px;margin:0 auto;padding:0 15px 60px}
+  .hero{background:var(--ink);color:#fff;margin:0 -15px 0;padding:22px 18px 16px;border-bottom:4px solid var(--accent)}
+  .hero .k{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.14em;font-size:11px;color:var(--accent);text-transform:uppercase;margin:0 0 3px}
+  .hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:clamp(28px,8vw,40px);margin:0;line-height:.98}
+
+  .tabs{position:sticky;top:0;z-index:20;display:flex;gap:4px;background:var(--paper);margin:0 -15px 18px;padding:10px 15px;border-bottom:1px solid var(--line)}
+  .tab{flex:1;border:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--steel);cursor:pointer}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 17px;margin-bottom:13px}
+  h2{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;margin:0 0 10px}
+  h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;margin:16px 0 7px;color:var(--accent-deep)}
+  .muted{color:var(--steel);font-size:13.5px}
+
+  /* scorecard */
+  .score{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+  .metric{background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:14px 15px}
+  .metric .top{display:flex;align-items:baseline;justify-content:space-between}
+  .metric .v{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;line-height:.9}
+  .metric .v .of{color:var(--steel-soft);font-size:19px}
+  .metric .v.hit{color:var(--go)}
+  .metric .l{color:var(--steel);font-size:12.5px;font-weight:500;margin-top:5px}
+  .metric .dots{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+  .metric .d{width:16px;height:16px;border-radius:5px;border:2px solid var(--line)}
+  .metric .d.on{background:var(--go);border-color:var(--go)}
+
+  .qhead{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--steel);letter-spacing:.05em;text-transform:uppercase;margin:2px 0 9px}
+  .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .lbtn{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:13px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;color:var(--ink);cursor:pointer;text-align:left}
+  .lbtn:active{transform:translateY(1px)}
+  .lbtn .chk{position:absolute;right:9px;top:9px;width:20px;height:20px;border-radius:50%;background:var(--go);color:#fff;font-size:12px;display:none;align-items:center;justify-content:center}
+  .lbtn.done .chk{display:flex}
+  .lbtn.done{border-color:var(--go);background:#F1FAF5}
+  .lbtn s{display:block;text-decoration:none;color:var(--steel);font-family:'Inter';font-weight:500;font-size:11.5px;margin-top:2px}
+  .abtn{border:1px solid var(--accent);background:#FFF3EF;color:var(--accent-deep)}
+
+  .log .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .log .row:last-child{border-bottom:none}
+  .log .tag{display:inline-flex;align-items:center;justify-content:center;padding:3px 9px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:#fff;background:var(--ink);margin-right:9px}
+  .log .tag.act{background:var(--accent)}
+  .log .meta{color:var(--steel);font-size:12.5px}
+  .log .x{background:none;border:none;color:var(--steel-soft);cursor:pointer;font-size:16px;padding:2px 6px}
+  .log .x:hover{color:var(--accent-deep)}
+  .empty{color:var(--steel-soft);font-size:14px;text-align:center;padding:14px 0}
+
+  /* weight */
+  .bignum{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:.9}
+  .bignum small{font-size:22px;color:var(--steel-soft)}
+  .chg{font-weight:600;font-size:14px;margin-top:2px}
+  .chg.up{color:var(--go)}.chg.down{color:var(--accent-deep)}
+  .goalbar{margin-top:14px}
+  .goalbar .track{height:12px;background:#EDEFF2;border-radius:20px;position:relative;overflow:hidden;border:1px solid var(--line)}
+  .goalbar .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--accent),#FF7A54);border-radius:20px}
+  .goalbar .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--steel);margin-top:6px;font-weight:600}
+  .weighin{display:flex;gap:8px;margin-top:12px}
+  .weighin input{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:16px;font-family:'Inter'}
+  .weighin input:focus{outline:none;border-color:var(--accent)}
+  .primary{border:none;border-radius:10px;background:var(--accent);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:0 18px;cursor:pointer}
+  svg.chart{width:100%;height:auto;display:block;margin-top:6px}
+
+  /* nutrition */
+  .toggle{display:flex;gap:8px;margin:4px 0 12px}
+  .tg{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:12px 10px;font-weight:600;font-size:14px;cursor:pointer;text-align:center;color:var(--steel)}
+  .tg.on{background:#F1FAF5;border-color:var(--go);color:var(--go)}
+  .tg .em{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;display:block;color:inherit}
+  textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font-family:'Inter';font-size:15px;resize:vertical;min-height:70px}
+  textarea:focus{outline:none;border-color:var(--accent)}
+
+  /* plan */
+  .wo{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:11px}
+  .wo .h{background:var(--ink);color:#fff;padding:10px 15px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px}
+  .wo ol{margin:0;padding:11px 15px 12px 32px;font-size:14px}
+  .wo ol li{margin-bottom:3px}
+  .wo .core{background:#FFF3EF;color:var(--accent-deep);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;padding:7px 15px;border-top:1px solid var(--line)}
+  .wo ol.corelist{padding-top:8px;padding-bottom:12px}
+  ul.rules{list-style:none;margin:0;padding:0}
+  ul.rules li{position:relative;padding:0 0 8px 24px;font-size:14.5px}
+  ul.rules li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;background:var(--accent);border-radius:2px;transform:rotate(45deg)}
+
+  .cbars{display:flex;align-items:flex-end;gap:6px;height:98px}
+  .cbar{flex:1;display:flex;flex-direction:column;align-items:center}
+  .cbwrap{width:100%;height:72px;display:flex;align-items:flex-end;background:#F1F3F5;border-radius:6px 6px 0 0;overflow:hidden}
+  .cb{width:100%;border-radius:6px 6px 0 0;background:var(--accent)}
+  .cb.hit{background:var(--go)}
+  .cbn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;margin-top:3px}
+  .cbn.miss{color:var(--steel-soft)}
+  .cbd{font-size:10px;color:var(--steel-soft);margin-top:1px}
+  .cstat{margin-top:13px;font-size:14px;color:var(--steel)}
+  .cstat b{color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:17px}
+  .cstat .st{color:var(--accent)}
+
+  .reset{background:none;border:1px solid var(--line);border-radius:9px;color:var(--steel-soft);font-size:13px;font-weight:600;cursor:pointer;padding:9px 14px;margin:18px auto 0;display:block}
+  .reset:hover{border-color:var(--accent);color:var(--accent-deep)}
+  .save{text-align:center;color:var(--steel-soft);font-size:12px;margin-top:8px}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="hero">
+  <p class="k">Progress hub</p>
+  <h1>The build tracker</h1>
+  <p style="color:#C7CCD3;margin:6px 0 0;font-size:13px">One place to log every lift, activity, weigh-in and meal.</p>
+</div>
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab active" data-v="week">Week</button>
+    <button class="tab" data-v="weight">Weight</button>
+    <button class="tab" data-v="food">Food</button>
+    <button class="tab" data-v="plan">Plan</button>
+  </div>
+
+  <!-- ===== WEEK ===== -->
+  <div class="view active" id="v-week">
+    <div class="score">
+      <div class="metric"><div class="top"><div class="v" id="m-lifts">0<span class="of">/4</span></div></div><div class="l">Lifts this week</div><div class="dots" id="m-lift-dots"></div></div>
+      <div class="metric"><div class="top"><div class="v" id="m-active">0</div></div><div class="l">Active days (any activity)</div><div class="dots" id="m-active-dots"></div></div>
+      <div class="metric"><div class="top"><div class="v" id="m-weigh">&mdash;</div></div><div class="l">Weigh-in done this week</div></div>
+      <div class="metric"><div class="top"><div class="v" id="m-prot">0<span class="of">/7</span></div></div><div class="l">Protein days</div></div>
+    </div>
+
+    <div class="card">
+      <div class="qhead">Log a lift &mdash; tap what he did</div>
+      <div class="btnrow" id="lift-buttons">
+        <button class="lbtn" data-t="UA">Upper A<s>push emphasis</s><span class="chk">&#10003;</span></button>
+        <button class="lbtn" data-t="LA">Lower A<s>squat</s><span class="chk">&#10003;</span></button>
+        <button class="lbtn" data-t="UB">Upper B<s>pull emphasis</s><span class="chk">&#10003;</span></button>
+        <button class="lbtn" data-t="LB">Lower B<s>hinge</s><span class="chk">&#10003;</span></button>
+      </div>
+      <div class="qhead" style="margin-top:16px">Log activity &mdash; anything that gets him moving</div>
+      <div class="btnrow">
+        <button class="lbtn abtn" data-t="BBALL">Basketball</button>
+        <button class="lbtn abtn" data-t="RUN">Run / Treadmill</button>
+        <button class="lbtn abtn" data-t="WALK">Walk</button>
+        <button class="lbtn abtn" data-t="BIKE">Bike</button>
+        <button class="lbtn abtn" data-t="SPORT">Sport / Pickup</button>
+        <button class="lbtn abtn" data-t="SWIM">Swim</button>
+        <button class="lbtn abtn" data-t="HIKE">Hike</button>
+        <button class="lbtn abtn" data-t="COND">Cardio / HIIT</button>
+        <button class="lbtn abtn" data-t="OTHER">Other active</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Consistency</h2>
+      <p class="muted" style="margin:-4px 0 12px">Lifts done each week (weeks run Thu&ndash;Wed). Green = hit all 4. This is the honest picture of whether he's showing up. Dates shown are each week's Thursday start.</p>
+      <div class="cbars" id="cbars"></div>
+      <div class="cstat" id="cstat"></div>
+    </div>
+
+    <div class="card log">
+      <h2>Recent sessions</h2>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== WEIGHT ===== -->
+  <div class="view" id="v-weight">
+    <div class="card">
+      <h2>Where he's at</h2>
+      <div class="bignum" id="w-current">&mdash; <small>lbs</small></div>
+      <div class="chg" id="w-change"></div>
+      <div class="goalbar">
+        <div class="track"><div class="fill" id="w-fill" style="width:0%"></div></div>
+        <div class="ends"><span id="w-start">start</span><span id="w-goal">goal</span></div>
+      </div>
+      <div class="weighin">
+        <input type="number" id="w-input" inputmode="decimal" placeholder="This week's weight (lbs)">
+        <button class="primary" id="w-save">Log</button>
+      </div>
+      <p class="muted" style="margin:9px 0 0">Weigh once a week, same day and time (mornings, before eating). For the build, the number should climb <b>slowly</b> &mdash; that's the goal, not a problem.</p>
+    </div>
+    <div class="card">
+      <h2>Trend</h2>
+      <div id="chart-wrap"></div>
+    </div>
+    <div class="card log">
+      <h2>Weigh-in history</h2>
+      <div id="weight-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== FOOD ===== -->
+  <div class="view" id="v-food">
+    <div class="card">
+      <h2>Today's nutrition</h2>
+      <p class="muted" style="margin:0 0 10px">Two things decide if he grows: enough protein, and eating in a small surplus. Tap both when he's hit them.</p>
+      <div class="toggle">
+        <button class="tg" id="tg-prot"><span class="em">Protein</span>~150g / day</button>
+        <button class="tg" id="tg-surplus"><span class="em">Ate enough</span>full meals, surplus</button>
+      </div>
+      <div class="qhead">What he ate today</div>
+      <textarea id="food-notes" placeholder="e.g. Eggs + oats, chicken rice bowl, protein shake, steak + potatoes..."></textarea>
+      <p class="save" id="food-save">&nbsp;</p>
+    </div>
+    <div class="card log">
+      <h2>Recent days</h2>
+      <div id="food-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== PLAN ===== -->
+  <div class="view" id="v-plan">
+    <div class="card">
+      <h2>The week</h2>
+      <ul class="rules">
+        <li><b>4 lifts a week</b> &mdash; Upper A, Lower A, Upper B, Lower B. Any 4 days that leave a rest day here and there.</li>
+        <li><b>Stay active 2&ndash;3 days</b> &mdash; basketball, a run, a bike, a swim, even a solid walk or hike. Anything that gets him moving counts.</li>
+        <li>Each lift is ~45 min: warm up 5 min, run the 6 moves, done.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>The lifts</h2>
+      <div class="wo"><div class="h">Upper A &middot; push + core</div><ol><li>DB or barbell bench press &mdash; 3&times;8</li><li>Lat pulldown &mdash; 3&times;10</li><li>DB shoulder press &mdash; 3&times;10</li><li>Seated cable row &mdash; 3&times;10</li><li>Lateral raise &mdash; 3&times;12</li><li>Triceps pushdown &mdash; 3&times;12</li></ol><div class="core">Abs / core finisher</div><ol class="corelist"><li>Hanging knee raise &mdash; 3&times;12</li><li>Cable crunch &mdash; 3&times;15</li><li>Plank &mdash; 3&times;30&ndash;45s</li></ol></div>
+      <div class="wo"><div class="h">Lower A &middot; squat</div><ol><li>Goblet or back squat &mdash; 3&times;8</li><li>Romanian deadlift &mdash; 3&times;10</li><li>Lunge or split squat &mdash; 3&times;10/leg</li><li>Seated leg curl &mdash; 3&times;12</li><li>Calf raise &mdash; 3&times;15</li><li>Plank &mdash; 3&times;30s</li></ol></div>
+      <div class="wo"><div class="h">Upper B &middot; pull</div><ol><li>Overhead press &mdash; 3&times;8</li><li>Pull-up or assisted &mdash; 3&times;8</li><li>Incline DB press &mdash; 3&times;10</li><li>One-arm DB row &mdash; 3&times;10</li><li>Face pull &mdash; 3&times;15</li><li>DB curl &mdash; 3&times;12</li></ol></div>
+      <div class="wo"><div class="h">Lower B &middot; hinge</div><ol><li>Trap-bar deadlift &mdash; 3&times;6</li><li>Leg press or Bulgarian split squat &mdash; 3&times;10</li><li>Hip thrust &mdash; 3&times;10</li><li>Leg extension &mdash; 3&times;12</li><li>Calf raise &mdash; 3&times;15</li><li>Hanging knee raise &mdash; 3 sets</li></ol></div>
+    </div>
+    <div class="card">
+      <h2>Eating for the goal</h2>
+      <ul class="rules">
+        <li><b>Slight surplus:</b> weight should trend up ~&frac14;&ndash;&frac12; lb a week. 155 &rarr; ~170 over a few months.</li>
+        <li><b>Protein every meal:</b> ~150g/day (roughly 1g per lb). Eggs, chicken, beef, fish, dairy, whey.</li>
+        <li><b>Carbs around training:</b> rice, oats, potatoes, fruit &mdash; fuel and recovery.</li>
+        <li><b>Sleep 8 hours.</b> It's when the muscle actually gets built.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>The 3 rules he can't mess up</h2>
+      <ul class="rules">
+        <li>Add a little weight whenever the last set feels easy.</li>
+        <li>Hit protein and don't skip meals &mdash; the scale going up is the win.</li>
+        <li>Show up 4 times. Consistency beats everything else.</li>
+      </ul>
+    </div>
+  </div>
+
+  <button class="reset" id="reset">Reset all data</button>
+  <div class="save" id="savestate">Saved automatically</div>
+
+</div>
+
+<script>
+  const KEY='progress-hub-v1';
+  const TYPES={UA:{l:'Upper A',k:'lift'},LA:{l:'Lower A',k:'lift'},UB:{l:'Upper B',k:'lift'},LB:{l:'Lower B',k:'lift'},BBALL:{l:'Basketball',k:'act'},RUN:{l:'Run / Treadmill',k:'act'},WALK:{l:'Walk',k:'act'},BIKE:{l:'Bike',k:'act'},SPORT:{l:'Sport / Pickup',k:'act'},SWIM:{l:'Swim',k:'act'},COND:{l:'Cardio / HIIT',k:'act'},HIKE:{l:'Hike',k:'act'},OTHER:{l:'Other active',k:'act'}};
+  let state={workouts:[],weights:[],nutrition:[],goal:170};
+
+  const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};
+  const WEEK_START=4; // week runs Thursday -> Wednesday (0=Sun ... 4=Thu)
+  function weekStart(dateStr){const d=new Date(dateStr);d.setHours(0,0,0,0);const off=(d.getDay()-WEEK_START+7)%7;d.setDate(d.getDate()-off);return d;}
+  function weekKey(dateStr){const d=weekStart(dateStr);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  const fmt=s=>new Date(s).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+
+  const store={
+    async get(k){
+      if(typeof window!=='undefined'&&window.storage&&window.storage.get){try{const r=await window.storage.get(k,true);return r&&r.value?r.value:null;}catch(e){}}
+      try{return localStorage.getItem(k);}catch(e){return null;}
+    },
+    async set(k,v){
+      if(typeof window!=='undefined'&&window.storage&&window.storage.set){try{await window.storage.set(k,v,true);return 'sync';}catch(e){}}
+      try{localStorage.setItem(k,v);return 'local';}catch(e){return null;}
+    }
+  };
+
+  async function load(){
+    try{const raw=await store.get(KEY);if(raw){const s=JSON.parse(raw);state.workouts=s.workouts||[];state.weights=s.weights||[];state.nutrition=s.nutrition||[];state.goal=s.goal||170;}}catch(e){}
+    render();
+  }
+  async function save(){
+    const mode=await store.set(KEY,JSON.stringify(state));
+    const el=document.getElementById('savestate');
+    if(mode==='sync')el.textContent='Saved \u2014 synced to you both';
+    else if(mode==='local')el.textContent='Saved on this device';
+    else el.textContent='Could not save \u2014 try reloading';
+  }
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');document.getElementById('v-'+t.dataset.v).classList.add('active');
+    window.scrollTo({top:0,behavior:'auto'});
+  }));
+
+  // logging
+  function logType(t){state.workouts.push({date:new Date().toISOString(),type:t});save();render();}
+  function removeWorkout(i){state.workouts.splice(i,1);save();render();}
+  document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>logType(b.dataset.t)));
+
+  // weight
+  document.getElementById('w-save').addEventListener('click',()=>{
+    const inp=document.getElementById('w-input');const v=parseFloat(inp.value);
+    if(!v||v<=0){inp.focus();return;}
+    state.weights.push({date:new Date().toISOString(),lbs:Math.round(v*10)/10});
+    inp.value='';save();render();
+  });
+  function removeWeight(i){state.weights.splice(i,1);save();render();}
+
+  // nutrition
+  function todayNut(){let e=state.nutrition.find(n=>n.dk===todayKey());if(!e){e={dk:todayKey(),date:new Date().toISOString(),protein:false,surplus:false,notes:''};state.nutrition.push(e);}return e;}
+  document.getElementById('tg-prot').addEventListener('click',()=>{const e=todayNut();e.protein=!e.protein;save();render();});
+  document.getElementById('tg-surplus').addEventListener('click',()=>{const e=todayNut();e.surplus=!e.surplus;save();render();});
+  document.getElementById('food-notes').addEventListener('input',()=>{const e=todayNut();e.notes=document.getElementById('food-notes').value;document.getElementById('food-save').textContent='Saving...';});
+  document.getElementById('food-notes').addEventListener('blur',()=>{save();document.getElementById('food-save').textContent='Saved';});
+
+  document.getElementById('reset').addEventListener('click',()=>{if(confirm('Clear ALL data for BOTH of you (workouts, weights, nutrition)?')){state={workouts:[],weights:[],nutrition:[],goal:170};save();render();}});
+
+  function dots(n,total,el){let h='';for(let i=0;i<total;i++)h+='<div class="d'+(i<n?' on':'')+'"></div>';el.innerHTML=h;}
+
+  function chartSVG(){
+    const arr=[...state.weights].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    if(arr.length===0)return '<div class="empty">Log a weigh-in to see the trend.</div>';
+    const W=320,H=150,pl=34,pr=14,pt=14,pb=22;
+    const vals=arr.map(a=>a.lbs);
+    let lo=Math.min(...vals,state.goal),hi=Math.max(...vals,state.goal);
+    if(lo===hi){lo-=3;hi+=3;}
+    const pad=(hi-lo)*0.15;lo-=pad;hi+=pad;
+    const pw=W-pl-pr,ph=H-pt-pb;
+    const X=i=>arr.length===1?pl+pw/2:pl+(i/(arr.length-1))*pw;
+    const Y=v=>pt+(1-(v-lo)/(hi-lo))*ph;
+    const gy=Y(state.goal);
+    const line=arr.map((a,i)=>X(i)+','+Y(a.lbs)).join(' ');
+    const circ=arr.map((a,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(a.lbs).toFixed(1)}" r="3.5" fill="var(--accent)"/>`).join('');
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight trend">
+      <line x1="${pl}" y1="${gy.toFixed(1)}" x2="${W-pr}" y2="${gy.toFixed(1)}" stroke="var(--go)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="${W-pr}" y="${(gy-5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--go)" font-weight="600">Goal ${state.goal}</text>
+      ${arr.length>1?`<polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`:''}
+      ${circ}
+      <text x="4" y="${(pt+4).toFixed(1)}" font-size="10" fill="var(--steel)">${Math.round(hi)}</text>
+      <text x="4" y="${(pt+ph).toFixed(1)}" font-size="10" fill="var(--steel)">${Math.round(lo)}</text>
+      <text x="${pl}" y="${H-6}" font-size="9" fill="var(--steel-soft)">${fmt(arr[0].date)}</text>
+      <text x="${W-pr}" y="${H-6}" text-anchor="end" font-size="9" fill="var(--steel-soft)">${fmt(arr[arr.length-1].date)}</text>
+    </svg>`;
+  }
+
+  function renderConsistency(){
+    const counts={};
+    state.workouts.forEach(w=>{if(TYPES[w.type]&&TYPES[w.type].k==='lift'){const k=weekKey(w.date);counts[k]=(counts[k]||0)+1;}});
+    const N=8,weeks=[];let d=weekStart(new Date().toISOString());
+    for(let i=0;i<N;i++){const k=weekKey(d.toISOString());weeks.unshift({k,count:counts[k]||0,date:new Date(d)});d.setDate(d.getDate()-7);}
+    document.getElementById('cbars').innerHTML=weeks.map(wk=>{
+      const c=wk.count,pct=Math.min(c/4,1)*100,hit=c>=4;
+      const md=(wk.date.getMonth()+1)+'/'+wk.date.getDate();
+      return `<div class="cbar"><div class="cbwrap"><div class="cb ${hit?'hit':''}" style="height:${pct}%"></div></div><div class="cbn ${c<4?'miss':''}">${c}</div><div class="cbd">${md}</div></div>`;
+    }).join('');
+    let streak=0,dd=weekStart(new Date().toISOString());
+    for(let i=0;i<520;i++){const k=weekKey(dd.toISOString());if((counts[k]||0)>=4)streak++;else if(i>0)break;dd.setDate(dd.getDate()-7);}
+    const hitWeeks=weeks.filter(w=>w.count>=4).length;
+    document.getElementById('cstat').innerHTML=`<b class="st">${streak}</b> week streak at 4+ &nbsp;&middot;&nbsp; <b>${hitWeeks}</b>/${N} recent weeks on target`;
+  }
+
+  function render(){
+    const wk=weekKey(new Date().toISOString());
+    const wow=state.workouts.filter(w=>weekKey(w.date)===wk);
+    const lifts=wow.filter(w=>TYPES[w.type]&&TYPES[w.type].k==='lift');
+    const acts=wow.filter(w=>TYPES[w.type]&&TYPES[w.type].k==='act');
+
+    // scorecard
+    const mL=document.getElementById('m-lifts');mL.innerHTML=lifts.length+'<span class="of">/4</span>';mL.className='v'+(lifts.length>=4?' hit':'');
+    dots(Math.min(lifts.length,4),4,document.getElementById('m-lift-dots'));
+    document.getElementById('m-active').textContent=acts.length;
+    dots(Math.min(acts.length,3),3,document.getElementById('m-active-dots'));
+    const weighed=state.weights.some(w=>weekKey(w.date)===wk);
+    document.getElementById('m-weigh').innerHTML=weighed?'<span style="color:var(--go)">&#10003;</span>':'&mdash;';
+    const protDays=new Set(state.nutrition.filter(n=>n.protein&&weekKey(n.date)===wk).map(n=>n.dk)).size;
+    document.getElementById('m-prot').innerHTML=protDays+'<span class="of">/7</span>';
+
+    // lift buttons done-state
+    const doneTypes=new Set(lifts.map(l=>l.type));
+    document.querySelectorAll('#lift-buttons .lbtn').forEach(b=>{b.classList.toggle('done',doneTypes.has(b.dataset.t));});
+
+    // recent sessions
+    const ll=document.getElementById('log-list');
+    if(state.workouts.length===0){ll.innerHTML='<div class="empty">Nothing logged yet. Tap a lift or activity above when he checks in.</div>';}
+    else{
+      const items=state.workouts.map((w,i)=>({w,i})).slice(-9).reverse();
+      ll.innerHTML=items.map(({w,i})=>{const T=TYPES[w.type]||{l:w.type,k:'lift'};return `<div class="row"><div><span class="tag${T.k==='act'?' act':''}">${w.type}</span>${T.l}<div class="meta">${fmt(w.date)}</div></div><button class="x" data-wi="${i}" aria-label="Remove">\u2715</button></div>`;}).join('');
+      ll.querySelectorAll('.x').forEach(b=>b.addEventListener('click',()=>removeWorkout(parseInt(b.dataset.wi))));
+    }
+
+    // weight view
+    const sorted=[...state.weights].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const cur=sorted.length?sorted[sorted.length-1].lbs:null;
+    const start=sorted.length?sorted[0].lbs:null;
+    document.getElementById('w-current').innerHTML=cur!=null?cur+' <small>lbs</small>':'&mdash; <small>lbs</small>';
+    const ch=document.getElementById('w-change');
+    if(cur!=null&&start!=null&&sorted.length>1){const diff=Math.round((cur-start)*10)/10;ch.className='chg '+(diff>=0?'up':'down');ch.textContent=(diff>=0?'+':'')+diff+' lbs since start';}
+    else ch.textContent='';
+    const s=start!=null?start:155,g=state.goal;
+    let pct=cur!=null?((cur-s)/(g-s))*100:0;pct=Math.max(0,Math.min(100,pct));
+    document.getElementById('w-fill').style.width=pct+'%';
+    document.getElementById('w-start').textContent='Start '+(start!=null?start:'155');
+    document.getElementById('w-goal').textContent='Goal '+g;
+    document.getElementById('chart-wrap').innerHTML=chartSVG();
+    const wl=document.getElementById('weight-list');
+    if(sorted.length===0){wl.innerHTML='<div class="empty">No weigh-ins yet.</div>';}
+    else{wl.innerHTML=[...sorted].reverse().slice(0,10).map(w=>{const idx=state.weights.indexOf(w);return `<div class="row"><div><b>${w.lbs} lbs</b><div class="meta">${fmt(w.date)}</div></div><button class="x" data-wgt="${idx}" aria-label="Remove">\u2715</button></div>`;}).join('');
+      wl.querySelectorAll('.x').forEach(b=>b.addEventListener('click',()=>removeWeight(parseInt(b.dataset.wgt))));}
+
+    renderConsistency();
+
+    // food view
+    const tn=state.nutrition.find(n=>n.dk===todayKey());
+    document.getElementById('tg-prot').classList.toggle('on',!!(tn&&tn.protein));
+    document.getElementById('tg-surplus').classList.toggle('on',!!(tn&&tn.surplus));
+    const fn=document.getElementById('food-notes');if(document.activeElement!==fn)fn.value=tn?tn.notes||'':'';
+    const fl=document.getElementById('food-list');
+    const past=[...state.nutrition].filter(n=>n.notes||n.protein||n.surplus).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,10);
+    if(past.length===0){fl.innerHTML='<div class="empty">No days logged yet.</div>';}
+    else{fl.innerHTML=past.map(n=>`<div class="row"><div><b>${fmt(n.date)}</b> <span class="meta">${n.protein?'&#10003; protein':''} ${n.surplus?'&#10003; ate enough':''}</span>${n.notes?`<div class="meta" style="margin-top:2px">${n.notes.replace(/</g,'&lt;')}</div>`:''}</div></div>`).join('');}
+  }
+
+  load();
+</script>
+</body>
+</html>
